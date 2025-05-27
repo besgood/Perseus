@@ -1,6 +1,43 @@
-version: '3'
+version: '3.8'
+
 services:
   backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://perseus:password@db/perseus
+      - METASPLOIT_USER=msf
+      - METASPLOIT_PASS=msfpass
+      - METASPLOIT_HOST=metasploit
+      - METASPLOIT_PORT=55553
+    depends_on:
+      - db
+      - metasploit
+
   frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
   db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: perseus
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: perseus
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
   metasploit:
+    image: metasploitframework/metasploit-framework
+    ports:
+      - "55553:55553"  # msfrpcd RPC service
+    entrypoint: ["msfrpcd", "-P", "msfpass", "-S", "-a", "0.0.0.0"]
+    restart: always
+
+volumes:
+  db_data:
